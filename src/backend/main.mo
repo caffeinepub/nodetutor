@@ -1,8 +1,6 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
-import Array "mo:core/Array";
 import Order "mo:core/Order";
-import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
 import Text "mo:core/Text";
 import Timer "mo:core/Timer";
@@ -14,26 +12,11 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
 actor {
-  //----------------------------- Custom Types ---------------------------//
-
-  type UserRole = {
-    #junior;
-    #senior;
-  };
-
-  type BookingStatus = {
-    #pending;
-    #confirmed;
-    #completed;
-  };
-
+  type UserRole = { #junior; #senior };
+  type BookingStatus = { #pending; #confirmed; #completed };
   type SessionId = Nat;
   type ResourceId = Nat;
-
-  type FileType = {
-    #pdf;
-    #link;
-  };
+  type FileType = { #pdf; #link };
 
   public type UserProfile = {
     name : Text;
@@ -64,16 +47,15 @@ actor {
   };
 
   module TutorProfile {
-    public func compare(tutor1 : TutorProfile, tutor2 : TutorProfile) : Order.Order {
-      tutor1.user.toText().compare(tutor2.user.toText());
+    public func compare(t1 : TutorProfile, t2 : TutorProfile) : Order.Order {
+      t1.user.toText().compare(t2.user.toText());
     };
-
-    public func compareByRating(tutor1 : TutorProfile, tutor2 : TutorProfile) : Order.Order {
-      switch (tutor1.rating, tutor2.rating) {
+    public func compareByRating(t1 : TutorProfile, t2 : TutorProfile) : Order.Order {
+      switch (t1.rating, t2.rating) {
         case (null, null) { #equal };
         case (null, _) { #greater };
         case (_, null) { #less };
-        case (?rating1, ?rating2) { Float.compare(rating2, rating1) };
+        case (?r1, ?r2) { Float.compare(r2, r1) };
       };
     };
   };
@@ -89,16 +71,14 @@ actor {
   };
 
   module Resource {
-    public func compare(resource1 : Resource, resource2 : Resource) : Order.Order {
-      Nat.compare(resource2.id, resource1.id);
+    public func compare(r1 : Resource, r2 : Resource) : Order.Order {
+      Nat.compare(r2.id, r1.id);
     };
   };
 
-  // -------------------- Authorization --------------------------- //
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // -------------------- Persistent State ------------------------ //
   var nextSessionId = 1;
   var nextResourceId = 1;
   var bookingCleanupTimerId : ?Timer.TimerId = null;
@@ -108,32 +88,30 @@ actor {
   let sessionBookings = Map.empty<SessionId, SessionBooking>();
   let resources = Map.empty<Nat, Resource>();
 
-  //---------------------- Registration ----------------------------//
-
+  // Upsert: allow re-registration to recover from partial failures
   public shared ({ caller }) func registerCallerUserProfile(userProfile : UserProfile) : async () {
     if (caller.isAnonymous()) {
       Runtime.trap("Anonymous callers cannot register");
     };
-    if (userProfiles.containsKey(caller)) {
-      Runtime.trap("User already registered");
-    };
-    // Auto-assign user role if not already in access control system
     switch (accessControlState.userRoles.get(caller)) {
       case (null) { accessControlState.userRoles.add(caller, #user) };
       case (?_) {};
     };
     userProfiles.add(caller, userProfile);
-
     if (userProfile.role == #senior) {
-      let tutorProfile : TutorProfile = {
-        user = caller;
-        avatarUrl = "";
-        isVerified = false;
-        isAvailable = false;
-        rating = null;
-        masteredSubjects = [];
+      switch (tutorProfiles.get(caller)) {
+        case (null) {
+          tutorProfiles.add(caller, {
+            user = caller;
+            avatarUrl = "";
+            isVerified = false;
+            isAvailable = false;
+            rating = null;
+            masteredSubjects = [];
+          });
+        };
+        case (?_) {};
       };
-      tutorProfiles.add(caller, tutorProfile);
     };
   };
 
@@ -148,197 +126,147 @@ actor {
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
+      Runtime.trap("Unauthorized");
     };
     userProfiles.add(caller, profile);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
+      Runtime.trap("Unauthorized");
     };
     userProfiles.get(user);
   };
 
   public query ({ caller }) func getTutorProfile(user : Principal) : async ?TutorProfile {
-    // Public information - no authorization needed
     tutorProfiles.get(user);
   };
 
-  //---------------------- Tutoring ----------------------------//
-
   public shared ({ caller }) func updateTutorAvailability(isAvailable : Bool) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update tutor availability");
+      Runtime.trap("Unauthorized");
     };
     switch (tutorProfiles.get(caller)) {
       case (?profile) {
-        let updatedProfile : TutorProfile = {
-          profile with
-          isAvailable;
-        };
-        tutorProfiles.add(caller, updatedProfile);
+        tutorProfiles.add(caller, { profile with isAvailable });
       };
-      case (null) {
-        Runtime.trap("Tutor profile does not exist");
-      };
+      case (null) { Runtime.trap("Tutor profile does not exist") };
     };
   };
 
   public shared ({ caller }) func updateTutorSubjects(subjects : [Text]) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update tutor subjects");
+      Runtime.trap("Unauthorized");
     };
     switch (tutorProfiles.get(caller)) {
       case (?profile) {
-        let updatedProfile : TutorProfile = {
-          profile with
-          masteredSubjects = subjects;
-        };
-        tutorProfiles.add(caller, updatedProfile);
+        tutorProfiles.add(caller, { profile with masteredSubjects = subjects });
       };
-      case (null) {
-        Runtime.trap("Tutor profile does not exist");
-      };
+      case (null) { Runtime.trap("Tutor profile does not exist") };
     };
   };
 
   public query ({ caller }) func getAvailableTutors() : async [TutorProfile] {
-    // Public information - no authorization needed
-    tutorProfiles.values().toArray().filter(func(tutor) { tutor.isAvailable });
+    tutorProfiles.values().toArray().filter(func(t) { t.isAvailable });
   };
 
   public query ({ caller }) func searchTutorsBySubject(subjectCode : Text) : async [TutorProfile] {
-    // Public information - no authorization needed
     tutorProfiles.values().toArray().filter(
-      func(tutor) {
-        tutor.masteredSubjects.find(func(s) { s == subjectCode }) != null;
-      }
+      func(t) { t.masteredSubjects.find(func(s) { s == subjectCode }) != null }
     );
   };
 
   public query ({ caller }) func getVerifiedTutors() : async [TutorProfile] {
-    // Public information - no authorization needed
-    tutorProfiles.values().toArray().filter(func(tutor) { tutor.isVerified });
+    tutorProfiles.values().toArray().filter(func(t) { t.isVerified });
   };
-
-  //---------------------- Booking ----------------------------//
 
   public shared ({ caller }) func bookSession(booking : SessionBooking) : async SessionId {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can book sessions");
+      Runtime.trap("Unauthorized");
     };
-    let bookingId = nextSessionId;
+    let id = nextSessionId;
     nextSessionId += 1;
-
-    let newBooking : SessionBooking = {
-      id = bookingId;
+    sessionBookings.add(id, {
+      id;
       junior = caller;
       senior = booking.senior;
       subjectCode = booking.subjectCode;
       dateTime = booking.dateTime;
       status = #pending;
       price = booking.price;
-    };
-
-    sessionBookings.add(bookingId, newBooking);
-    bookingId;
+    });
+    id;
   };
 
   public shared ({ caller }) func updateSessionStatus(bookingId : SessionId, status : BookingStatus) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update session status");
+      Runtime.trap("Unauthorized");
     };
     switch (sessionBookings.get(bookingId)) {
       case (?booking) {
         if (caller != booking.junior and caller != booking.senior) {
-          Runtime.trap("Unauthorized: Only users can update their own booking");
+          Runtime.trap("Unauthorized");
         };
-        let updatedBooking = {
-          booking with
-          status;
-        };
-        sessionBookings.add(bookingId, updatedBooking);
+        sessionBookings.add(bookingId, { booking with status });
       };
-      case (null) {
-        Runtime.trap("Booking does not exist");
-      };
+      case (null) { Runtime.trap("Booking does not exist") };
     };
   };
 
   public query ({ caller }) func getSessionsForUser(user : Principal) : async [SessionBooking] {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own sessions");
+      Runtime.trap("Unauthorized");
     };
     sessionBookings.values().toArray().filter(
-      func(booking) { booking.junior == user or booking.senior == user }
+      func(b) { b.junior == user or b.senior == user }
     );
   };
 
   public query ({ caller }) func getCallerSessions() : async [SessionBooking] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view sessions");
+      Runtime.trap("Unauthorized");
     };
     sessionBookings.values().toArray().filter(
-      func(booking) { booking.junior == caller or booking.senior == caller }
+      func(b) { b.junior == caller or b.senior == caller }
     );
   };
 
   public query ({ caller }) func getBookingsByStatus(status : BookingStatus) : async [SessionBooking] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view bookings");
+      Runtime.trap("Unauthorized");
     };
     sessionBookings.values().toArray().filter(
-      func(booking) { 
-        (booking.junior == caller or booking.senior == caller) and booking.status == status 
-      }
+      func(b) { (b.junior == caller or b.senior == caller) and b.status == status }
     );
   };
 
-  //---------------------- Learn Resources ----------------------------//
-
   public shared ({ caller }) func addResource(resource : Resource) : async ResourceId {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can add resources");
+      Runtime.trap("Unauthorized");
     };
-    let resourceId = nextResourceId;
+    let id = nextResourceId;
     nextResourceId += 1;
-
-    let newResource = {
-      resource with
-      id = resourceId;
-      uploader = caller;
-    };
-
-    resources.add(resourceId, newResource);
-    resourceId;
+    resources.add(id, { resource with id; uploader = caller });
+    id;
   };
 
   public query ({ caller }) func getAllResources() : async [Resource] {
-    // Public information - no authorization needed
     resources.values().toArray();
   };
 
   public query ({ caller }) func getResourcesBySemester(semester : Nat) : async [Resource] {
-    // Public information - no authorization needed
-    resources.values().toArray().filter(func(resource) { resource.semester == semester });
+    resources.values().toArray().filter(func(r) { r.semester == semester });
   };
 
   public query ({ caller }) func getResourcesBySubject(subjectCode : Text) : async [Resource] {
-    // Public information - no authorization needed
-    resources.values().toArray().filter(func(resource) { resource.subjectCode == subjectCode });
+    resources.values().toArray().filter(func(r) { r.subjectCode == subjectCode });
   };
 
   public query ({ caller }) func getResourcesBySemesterAndSubject(semester : Nat, subjectCode : Text) : async [Resource] {
-    // Public information - no authorization needed
     resources.values().toArray().filter(
-      func(resource) {
-        resource.semester == semester and resource.subjectCode == subjectCode
-      }
+      func(r) { r.semester == semester and r.subjectCode == subjectCode }
     );
   };
-
-  //---------------------- Admin ----------------------------//
 
   public shared ({ caller }) func verifyTutor(user : Principal) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
@@ -346,17 +274,11 @@ actor {
     };
     switch (tutorProfiles.get(user)) {
       case (?profile) {
-        let updatedProfile = {
-          profile with
-          isVerified = true;
-        };
-        tutorProfiles.add(user, updatedProfile);
+        tutorProfiles.add(user, { profile with isVerified = true });
       };
       case (null) { Runtime.trap("Tutor profile does not exist") };
     };
   };
-
-  //---------------------- Initialization ----------------------------//
 
   public shared ({ caller }) func initialize() : async () {
     switch (bookingCleanupTimerId) {
@@ -368,24 +290,15 @@ actor {
     };
   };
 
-  //---------------------- Internal Cleanup ----------------------------//
-
   func cleanupOldBookings() : async () {
     let now = Time.now();
     let oneDayNanos : Int = 24 * 60 * 60 * 1_000_000_000;
     let oldBookingIds = List.empty<SessionId>();
-
     sessionBookings.entries().forEach(
       func((id, booking)) {
-        if (now - booking.dateTime > oneDayNanos) {
-          oldBookingIds.add(id);
-        };
+        if (now - booking.dateTime > oneDayNanos) { oldBookingIds.add(id) };
       }
     );
-    oldBookingIds.values().forEach(
-      func(id) {
-        sessionBookings.remove(id);
-      }
-    );
+    oldBookingIds.values().forEach(func(id) { sessionBookings.remove(id) });
   };
 };

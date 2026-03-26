@@ -114,10 +114,6 @@ export function useRegisterProfile() {
       subjects?: string[];
     }) => {
       if (!actor) throw new Error("Not connected");
-      // Initialize access control role before registering (no-op if already registered)
-      try {
-        await actor._initializeAccessControlWithSecret("");
-      } catch (_) {}
       await actor.registerCallerUserProfile(profile);
       if (subjects && subjects.length > 0) {
         await actor.updateTutorSubjects(subjects);
