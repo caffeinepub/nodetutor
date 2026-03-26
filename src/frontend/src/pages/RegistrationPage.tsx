@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "@tanstack/react-router";
 import { BookOpen, GraduationCap, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import { useRegisterProfile } from "../hooks/useQueries";
 export default function RegistrationPage() {
   const { clear } = useInternetIdentity();
   const { mutateAsync: registerProfile, isPending } = useRegisterProfile();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -61,6 +63,11 @@ export default function RegistrationPage() {
         subjects: subjectList,
       });
       toast.success("Profile created! Welcome to NodeTutor.");
+      if (role === "senior") {
+        navigate({ to: "/senior" });
+      } else {
+        navigate({ to: "/dashboard" });
+      }
     } catch (_e) {
       toast.error("Failed to create profile. Please try again.");
     }
