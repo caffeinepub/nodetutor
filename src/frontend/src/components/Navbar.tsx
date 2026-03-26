@@ -10,22 +10,24 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, BookOpen, ChevronDown, GraduationCap } from "lucide-react";
 import type { UserProfile } from "../backend.d";
 import { UserRole } from "../backend.d";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { clearDemoProfile } from "../hooks/useDemoAuth";
 
 interface NavbarProps {
   profile: UserProfile;
+  onLogout?: () => void;
 }
 
-export default function Navbar({ profile }: NavbarProps) {
-  const { clear } = useInternetIdentity();
+export default function Navbar({ profile, onLogout }: NavbarProps) {
   const navigate = useNavigate();
   const isJunior = profile.role === UserRole.junior;
 
   const handleLogout = () => {
-    clear();
+    onLogout?.();
+    clearDemoProfile();
     navigate({ to: "/" });
   };
 
+  const firstName = profile.name.split(" ")[0];
   const initials = profile.name
     .split(" ")
     .map((n) => n[0])
@@ -34,17 +36,19 @@ export default function Navbar({ profile }: NavbarProps) {
     .slice(0, 2);
 
   return (
-    <nav className="sticky top-0 z-50 bg-card border-b border-border shadow-xs">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         <Link
           to={isJunior ? "/dashboard" : "/senior"}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2.5"
           data-ocid="nav.link"
         >
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">N</span>
+          <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
+            <span className="text-white font-bold text-sm">N</span>
           </div>
-          <span className="font-bold text-lg text-foreground">NodeTutor</span>
+          <span className="font-bold text-lg text-foreground tracking-tight">
+            NodeTutor
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
@@ -52,14 +56,14 @@ export default function Navbar({ profile }: NavbarProps) {
             <>
               <Link
                 to="/dashboard"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
                 data-ocid="nav.find_tutors.link"
               >
                 Find Tutors
               </Link>
               <Link
                 to="/resources"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
                 data-ocid="nav.resources.link"
               >
                 Resources
@@ -69,14 +73,14 @@ export default function Navbar({ profile }: NavbarProps) {
             <>
               <Link
                 to="/senior"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
                 data-ocid="nav.schedule.link"
               >
                 My Sessions
               </Link>
               <Link
                 to="/resources"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
                 data-ocid="nav.resources.link"
               >
                 Resources
@@ -86,10 +90,15 @@ export default function Navbar({ profile }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <span className="hidden lg:block text-sm text-muted-foreground">
+            Welcome back,{" "}
+            <span className="font-semibold text-foreground">{firstName}!</span>
+          </span>
+
           <Button
             variant="ghost"
             size="icon"
-            className="relative"
+            className="relative rounded-full"
             data-ocid="nav.notifications.button"
           >
             <Bell className="w-4 h-4 text-muted-foreground" />
@@ -99,21 +108,24 @@ export default function Navbar({ profile }: NavbarProps) {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border hover:bg-accent transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border hover:bg-secondary transition-colors"
                 data-ocid="nav.user.dropdown_menu"
               >
                 <Avatar className="w-7 h-7">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                  <AvatarFallback className="bg-primary text-white text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium text-foreground hidden sm:block">
-                  {profile.name.split(" ")[0]}
+                  {firstName}
                 </span>
                 <ChevronDown className="w-3 h-3 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent
+              align="end"
+              className="w-48 rounded-2xl shadow-md"
+            >
               <DropdownMenuItem disabled className="flex items-center gap-2">
                 {isJunior ? (
                   <BookOpen className="w-4 h-4" />

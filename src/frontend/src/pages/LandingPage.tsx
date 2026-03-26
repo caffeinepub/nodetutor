@@ -1,87 +1,99 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, CheckCircle2, Star, Zap } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Star,
+  Users,
+  Zap,
+} from "lucide-react";
 import { motion } from "motion/react";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 const features = [
   {
     icon: <Zap className="w-6 h-6 text-primary" />,
     title: "Micro-Tutoring",
-    desc: "Short, focused sessions designed to resolve specific doubts quickly. No long commitments, just fast help when you need it.",
+    desc: "30-60 min 1-on-1 concept clearing.",
   },
   {
-    icon: <BookOpen className="w-6 h-6 text-primary" />,
+    icon: <Users className="w-6 h-6 text-primary" />,
     title: "Doubt Crunching",
-    desc: "Ask your exact question. Get a direct answer from someone who aced the same exam last semester.",
+    desc: "Pay-per-doubt live walkthroughs.",
   },
   {
-    icon: <CheckCircle2 className="w-6 h-6 text-primary" />,
-    title: "Grade-Card Verified Tutors",
-    desc: "Every senior tutor is verified through their academic records. Only students who truly mastered a subject can teach it.",
+    icon: <Clock className="w-6 h-6 text-primary" />,
+    title: "Series Exam Crash Packs",
+    desc: "Small group cohorts before exams.",
   },
 ];
 
 const sampleTutors = [
   {
-    name: "Sarah Chen",
-    initials: "SC",
-    rating: 4.9,
-    subjects: ["Circuits", "EE101"],
-    color: "#6366f1",
-  },
-  {
-    name: "David Lee",
-    initials: "DL",
-    rating: 4.7,
-    subjects: ["Thermodynamics", "PHY201"],
-    color: "#0ea5e9",
-  },
-  {
-    name: "Priya Nair",
-    initials: "PN",
-    rating: 4.8,
-    subjects: ["MAT101", "Calculus"],
-    color: "#ec4899",
-  },
-  {
-    name: "Arjun Menon",
+    name: "Arjun M.",
     initials: "AM",
-    rating: 4.6,
-    subjects: ["EST100", "Python"],
-    color: "#f59e0b",
+    branch: "S7, CSE",
+    rating: 4.9,
+    subjects: ["EST100 Mechanics", "MAT101 Calculus"],
+    color: "#34C759",
+  },
+  {
+    name: "Lakshmi S.",
+    initials: "LS",
+    branch: "S5, ECE",
+    rating: 4.8,
+    subjects: ["EST102 C Programming", "Python"],
+    color: "#007AFF",
+  },
+  {
+    name: "Rahul Krishnan",
+    initials: "RK",
+    branch: "S7, ME",
+    rating: 5.0,
+    subjects: ["BE110 Engineering Graphics"],
+    color: "#FF9500",
+  },
+  {
+    name: "Siddharth V.",
+    initials: "SV",
+    branch: "S6, CSE",
+    rating: 4.7,
+    subjects: ["CS301 Algorithms", "Python"],
+    color: "#AF52DE",
   },
 ];
 
 export default function LandingPage() {
-  const { login, isLoggingIn } = useInternetIdentity();
+  const navigate = useNavigate();
+  const goToRegister = () => navigate({ to: "/register" });
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-card border-b border-border sticky top-0 z-50 shadow-xs">
+      {/* Navbar */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">
-                N
-              </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="font-bold text-lg text-foreground">NodeTutor</span>
+            <span className="font-bold text-lg text-foreground tracking-tight">
+              NodeTutor
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <Button
-              onClick={login}
-              disabled={isLoggingIn}
-              variant="outline"
+              onClick={goToRegister}
+              variant="ghost"
               size="sm"
+              className="text-foreground font-medium"
               data-ocid="landing.login.button"
             >
               Log In
             </Button>
             <Button
-              onClick={login}
-              disabled={isLoggingIn}
+              onClick={goToRegister}
               size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-white hover:bg-primary/90 rounded-full font-semibold px-5"
               data-ocid="landing.signup.button"
             >
               Get Started
@@ -90,203 +102,155 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section className="relative overflow-hidden">
-        <div className="max-w-[1200px] mx-auto px-6 py-20 md:py-28">
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl"
-          >
-            <div className="inline-flex items-center gap-2 bg-accent px-3 py-1.5 rounded-full mb-6">
-              <Star className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-semibold text-primary">
-                Peer-to-Peer Academic Micro-Tutoring
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight mb-6">
-              NodeTutor: Learn From
-              <br />
-              <span className="text-primary">Your Engineering Peers</span>
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl">
-              Connect with grade-card verified senior students who have mastered
-              the subjects you need help with. Book micro-sessions for just
-              ₹250.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={login}
-                disabled={isLoggingIn}
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-base font-semibold px-8"
-                data-ocid="landing.signup_junior.button"
-              >
-                Sign Up as a Junior <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-              <Button
-                onClick={login}
-                disabled={isLoggingIn}
-                size="lg"
-                variant="outline"
-                className="text-base font-semibold px-8 border-border"
-                data-ocid="landing.signup_senior.button"
-              >
-                Become a Senior Tutor
-              </Button>
-            </div>
-            <div className="flex items-center gap-6 mt-8">
-              {[
-                "Grade-Card Verified",
-                "₹250 per session",
-                "KTU curriculum",
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                  <span className="text-sm text-muted-foreground">{item}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-        <div className="relative">
-          <img
-            src="/assets/generated/hero-nodetutor.dim_1200x500.jpg"
-            alt="Engineering students collaborating"
-            className="w-full object-cover max-h-72 object-top"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
-      </section>
-
-      <section className="py-20 bg-background">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              Why NodeTutor?
-            </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              Built for engineering students who understand each other's
-              struggles — because they've been there.
-            </p>
-          </motion.div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-card border border-border rounded-xl p-6 shadow-card hover:shadow-card-hover transition-shadow"
-              >
-                <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center mb-4">
-                  {feature.icon}
-                </div>
-                <h3 className="font-semibold text-foreground text-lg mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {feature.desc}
-                </p>
-              </motion.div>
-            ))}
+      {/* Hero */}
+      <section className="max-w-[1200px] mx-auto px-6 py-24 md:py-32">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center max-w-3xl mx-auto"
+        >
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-primary text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            KTU Verified Peer Tutors
           </div>
-        </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight leading-[1.1] mb-6">
+            Learn from your
+            <span className="text-primary"> seniors.</span>
+          </h1>
+          <p className="text-xl text-muted-foreground leading-relaxed mb-10 max-w-xl mx-auto">
+            NodeTutor connects KTU engineering students with verified senior
+            peers for micro-tutoring, doubt clearing, and exam prep.
+          </p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <Button
+              onClick={goToRegister}
+              size="lg"
+              className="bg-primary text-white hover:bg-primary/90 rounded-full font-semibold px-8 h-12"
+              data-ocid="landing.cta.primary_button"
+            >
+              Sign Up as a Junior <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+            <Button
+              onClick={goToRegister}
+              variant="outline"
+              size="lg"
+              className="rounded-full font-semibold px-8 h-12 border-border"
+              data-ocid="landing.senior.secondary_button"
+            >
+              Become a Senior Tutor
+            </Button>
+          </div>
+        </motion.div>
       </section>
 
-      <section className="py-20 bg-secondary/30">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <h2 className="text-2xl font-bold text-foreground mb-2 text-center">
-            Meet Our Top Tutors
-          </h2>
-          <p className="text-muted-foreground text-center mb-10">
-            Verified seniors ready to help you succeed
-          </p>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {sampleTutors.map((t, i) => (
-              <motion.div
+      {/* Features */}
+      <section className="max-w-[1200px] mx-auto px-6 pb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="grid md:grid-cols-3 gap-5"
+        >
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="bg-white rounded-3xl p-8 shadow-sm border border-border"
+            >
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+                {f.icon}
+              </div>
+              <h3 className="font-bold text-foreground mb-1.5">{f.title}</h3>
+              <p className="text-sm text-muted-foreground">{f.desc}</p>
+            </div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* Tutors */}
+      <section className="bg-white border-t border-border">
+        <div className="max-w-[1200px] mx-auto px-6 py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight mb-3">
+              Top Verified Tutors
+            </h2>
+            <p className="text-muted-foreground">
+              Grade-card verified seniors ready to help
+            </p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-5">
+            {sampleTutors.map((t) => (
+              <div
                 key={t.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="bg-card border border-border rounded-xl p-5 shadow-card text-center"
+                className="bg-background rounded-3xl p-6 border border-border"
               >
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-3"
-                  style={{ background: t.color }}
-                >
-                  {t.initials}
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-sm"
+                    style={{ backgroundColor: t.color }}
+                  >
+                    {t.initials}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm text-foreground">
+                      {t.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t.branch}
+                    </div>
+                  </div>
                 </div>
-                <div className="font-semibold text-foreground text-sm">
-                  {t.name}
-                </div>
-                <div className="flex items-center justify-center gap-1 my-1">
-                  <Star
-                    className="w-3 h-3"
-                    style={{ fill: "#F4C542", color: "#F4C542" }}
-                  />
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {t.rating}/5
+                <div className="flex items-center gap-1 mb-3">
+                  <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                  <span className="text-xs font-semibold text-foreground">
+                    {t.rating}
+                  </span>
+                  <span className="inline-flex items-center ml-2 bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                    ✓ Verified
                   </span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {t.subjects.join(" • ")}
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {t.subjects.map((s) => (
+                    <span
+                      key={s}
+                      className="text-xs bg-blue-50 text-primary px-2 py-0.5 rounded-full"
+                    >
+                      {s}
+                    </span>
+                  ))}
                 </div>
-                <div className="inline-flex items-center gap-1 mt-2 bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                  <CheckCircle2 className="w-3 h-3" /> Verified
-                </div>
-              </motion.div>
+                <Button
+                  onClick={goToRegister}
+                  size="sm"
+                  className="w-full bg-primary text-white hover:bg-primary/90 rounded-full text-xs font-semibold"
+                  data-ocid="landing.book.primary_button"
+                >
+                  Book a Micro-Session
+                </Button>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-primary">
-        <div className="max-w-[1200px] mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-            Ready to ace your engineering exams?
-          </h2>
-          <p className="text-primary-foreground/80 mb-8 max-w-lg mx-auto">
-            Join thousands of engineering students already learning smarter with
-            NodeTutor.
-          </p>
-          <Button
-            onClick={login}
-            disabled={isLoggingIn}
-            size="lg"
-            className="bg-white text-primary hover:bg-white/90 font-semibold px-10"
-            data-ocid="landing.cta.button"
-          >
-            Start Learning Today <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </div>
-      </section>
-
-      <footer className="bg-card border-t border-border py-8">
-        <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Footer */}
+      <footer className="border-t border-border bg-background">
+        <div className="max-w-[1200px] mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">
-                N
-              </span>
+            <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">N</span>
             </div>
-            <span className="font-semibold text-foreground">NodeTutor</span>
+            <span className="font-semibold text-sm text-foreground">
+              NodeTutor
+            </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()}. Built with ❤️ using{" "}
             <a
               href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline"
+              className="hover:text-foreground transition-colors"
             >
               caffeine.ai
             </a>

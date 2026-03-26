@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -38,7 +37,7 @@ const SAMPLE_RESOURCES: Resource[] = [
   {
     id: BigInt(3),
     title: "Programming in C - KTU Syllabus",
-    subjectCode: "EST100",
+    subjectCode: "EST102",
     semester: BigInt(1),
     fileType: FileType.link,
     url: "#",
@@ -80,11 +79,11 @@ function ResourceCard({
   const isPdf = resource.fileType === FileType.pdf;
   return (
     <div
-      className="bg-card border border-border rounded-xl p-4 shadow-card hover:shadow-card-hover transition-all flex items-start gap-3"
+      className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-start gap-4"
       data-ocid={`resources.item.${index}`}
     >
       <div
-        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
           isPdf ? "bg-red-50" : "bg-blue-50"
         }`}
       >
@@ -95,21 +94,21 @@ function ResourceCard({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm text-foreground leading-tight mb-1">
+        <div className="font-semibold text-sm text-foreground leading-tight mb-2">
           {resource.title}
         </div>
-        <div className="flex items-center flex-wrap gap-2 mt-1">
-          <Badge variant="secondary" className="text-xs">
+        <div className="flex items-center flex-wrap gap-2">
+          <Badge variant="secondary" className="text-xs rounded-full">
             {resource.subjectCode}
           </Badge>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs rounded-full">
             Sem {String(resource.semester)}
           </Badge>
           <Badge
-            className={`text-xs ${
+            className={`text-xs rounded-full ${
               isPdf
-                ? "bg-red-50 text-red-600 border-red-200"
-                : "bg-blue-50 text-blue-600 border-blue-200"
+                ? "bg-red-50 text-red-600 border-red-100"
+                : "bg-blue-50 text-blue-600 border-blue-100"
             }`}
             variant="outline"
           >
@@ -120,7 +119,7 @@ function ResourceCard({
       <Button
         variant="ghost"
         size="icon"
-        className="flex-shrink-0"
+        className="flex-shrink-0 rounded-xl hover:bg-background"
         asChild
         data-ocid={`resources.download.button.${index}`}
       >
@@ -173,79 +172,79 @@ export default function ResourcesPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="max-w-[1200px] mx-auto px-6 py-8">
+      <div className="max-w-[1200px] mx-auto px-6 py-10">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
               KTU Resources Hub
             </h1>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground">
             Downloadable study materials, notes, and video lectures for KTU
             engineering students
           </p>
         </div>
 
         {/* Filters */}
-        <Card className="shadow-card border-border mb-6">
-          <CardContent className="pt-5">
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Filter className="w-4 h-4" />
-                <span>Filter:</span>
-              </div>
-              <div className="flex-1">
-                <Select value={semester} onValueChange={setSemester}>
-                  <SelectTrigger
-                    className="h-9"
-                    data-ocid="resources.semester.select"
-                  >
-                    <SelectValue placeholder="All Semesters" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                      <SelectItem key={s} value={String(s)}>
-                        Semester {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <Input
-                  value={subjectCode}
-                  onChange={(e) => setSubjectCode(e.target.value)}
-                  placeholder="Subject code (e.g. MAT101)"
-                  className="h-9"
-                  data-ocid="resources.subject.input"
-                />
-              </div>
-              <Button
-                onClick={handleFilter}
-                className="bg-primary text-primary-foreground h-9"
-                data-ocid="resources.filter.button"
-              >
-                Apply
-              </Button>
-              {(appliedSemester || appliedSubject) && (
-                <Button
-                  variant="outline"
-                  onClick={handleReset}
-                  className="h-9"
-                  data-ocid="resources.reset.button"
-                >
-                  Reset
-                </Button>
-              )}
+        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-shrink-0">
+              <Filter className="w-4 h-4" />
+              <span>Filter:</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex-1">
+              <Select value={semester} onValueChange={setSemester}>
+                <SelectTrigger
+                  className="bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary"
+                  data-ocid="resources.semester.select"
+                >
+                  <SelectValue placeholder="All Semesters" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      Semester {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1">
+              <input
+                value={subjectCode}
+                onChange={(e) => setSubjectCode(e.target.value)}
+                placeholder="Subject code (e.g. MAT101)"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                data-ocid="resources.subject.input"
+              />
+            </div>
+            <Button
+              onClick={handleFilter}
+              className="bg-primary text-white hover:bg-primary/90 rounded-full px-6"
+              data-ocid="resources.filter.button"
+            >
+              Apply
+            </Button>
+            {(appliedSemester || appliedSubject) && (
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="rounded-full"
+                data-ocid="resources.reset.button"
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+        </div>
 
         {/* Resources grid */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-foreground">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-bold text-foreground text-lg tracking-tight">
             {allResources.length} Resource{allResources.length !== 1 ? "s" : ""}{" "}
             Found
           </h2>
@@ -257,16 +256,16 @@ export default function ResourcesPage() {
             data-ocid="resources.loading_state"
           >
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-20 rounded-xl" />
+              <Skeleton key={i} className="h-20 rounded-2xl" />
             ))}
           </div>
         ) : allResources.length === 0 ? (
           <div
-            className="bg-card border border-border rounded-xl p-12 text-center"
+            className="bg-white rounded-2xl p-12 text-center shadow-sm"
             data-ocid="resources.empty_state"
           >
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-foreground font-medium">No resources found</p>
+            <p className="text-foreground font-semibold">No resources found</p>
             <p className="text-muted-foreground text-sm mt-1">
               Try changing the filters
             </p>
@@ -281,7 +280,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 mt-8">
+      <footer className="border-t border-border py-8 mt-8">
         <div className="max-w-[1200px] mx-auto px-6">
           <p className="text-sm text-muted-foreground text-center">
             © {new Date().getFullYear()}. Built with ❤️ using{" "}

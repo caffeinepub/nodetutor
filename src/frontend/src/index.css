@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,53 +13,50 @@
 
 @layer base {
   :root {
-    --radius: 0.75rem;
-    /* Page background: #F3F5F7 - light cool gray */
-    --background: 0.967 0.005 247;
-    /* Foreground: #111827 - near black */
-    --foreground: 0.18 0.015 264;
+    --radius: 1rem;
+    /* Page background: #F5F5F7 - Apple signature light gray */
+    --background: 0.965 0.002 285;
+    /* Foreground: #1D1D1F - Apple charcoal */
+    --foreground: 0.145 0.005 285;
     /* Card: #FFFFFF */
     --card: 1 0 0;
-    --card-foreground: 0.18 0.015 264;
+    --card-foreground: 0.145 0.005 285;
     /* Popover */
     --popover: 1 0 0;
-    --popover-foreground: 0.18 0.015 264;
-    /* Primary: #1E73E8 blue */
-    --primary: 0.55 0.2 255;
+    --popover-foreground: 0.145 0.005 285;
+    /* Primary: #0071E3 - Apple blue */
+    --primary: 0.56 0.22 258;
     --primary-foreground: 1 0 0;
     /* Secondary */
-    --secondary: 0.96 0.005 247;
-    --secondary-foreground: 0.18 0.015 264;
-    /* Muted: #6B7280 */
-    --muted: 0.96 0.005 247;
-    --muted-foreground: 0.52 0.01 264;
+    --secondary: 0.96 0.002 285;
+    --secondary-foreground: 0.145 0.005 285;
+    /* Muted */
+    --muted: 0.96 0.002 285;
+    /* Muted foreground: #86868B - Apple medium gray */
+    --muted-foreground: 0.575 0.005 280;
     /* Accent */
     --accent: 0.94 0.01 255;
-    --accent-foreground: 0.55 0.2 255;
+    --accent-foreground: 0.56 0.22 258;
     /* Destructive */
     --destructive: 0.577 0.245 27.325;
     --destructive-foreground: 1 0 0;
-    /* Border: #E5E7EB */
-    --border: 0.91 0.006 264;
-    --input: 0.91 0.006 264;
-    --ring: 0.55 0.2 255;
-    --chart-1: 0.55 0.2 255;
+    /* Border: #E5E5EA */
+    --border: 0.915 0.004 285;
+    --input: 0.915 0.004 285;
+    --ring: 0.56 0.22 258;
+    --chart-1: 0.56 0.22 258;
     --chart-2: 0.6 0.118 184.704;
     --chart-3: 0.398 0.07 227.392;
     --chart-4: 0.828 0.189 84.429;
     --chart-5: 0.769 0.188 70.08;
     --sidebar: 1 0 0;
-    --sidebar-foreground: 0.18 0.015 264;
-    --sidebar-primary: 0.55 0.2 255;
+    --sidebar-foreground: 0.145 0.005 285;
+    --sidebar-primary: 0.56 0.22 258;
     --sidebar-primary-foreground: 1 0 0;
     --sidebar-accent: 0.94 0.01 255;
-    --sidebar-accent-foreground: 0.55 0.2 255;
-    --sidebar-border: 0.91 0.006 264;
-    --sidebar-ring: 0.55 0.2 255;
-    /* Custom rating yellow */
-    --rating-yellow: #f4c542;
-    /* Verified badge blue */
-    --verified-blue: #2563eb;
+    --sidebar-accent-foreground: 0.56 0.22 258;
+    --sidebar-border: 0.915 0.004 285;
+    --sidebar-ring: 0.56 0.22 258;
   }
 
   * {
@@ -65,7 +64,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    font-family: "Inter", "Plus Jakarta Sans", system-ui, -apple-system,
+      sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 }
