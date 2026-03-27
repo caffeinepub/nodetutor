@@ -15,7 +15,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BookingStatus } from "../backend.d";
 import type { TutorProfile } from "../backend.d";
@@ -96,18 +96,78 @@ interface BookingModalProps {
   tutor: DummyTutor | null;
   isDummy: boolean;
   onClose: () => void;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
+function BookingModal({
+  tutor,
+  isDummy,
+  onClose,
+  triggerRef,
+}: BookingModalProps) {
   const { identity } = useInternetIdentity();
   const [subject, setSubject] = useState(tutor?.masteredSubjects[0] ?? "");
   const [dateTime, setDateTime] = useState("");
   const { mutateAsync: bookSession, isPending } = useBookSession();
+  const modalRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = "booking-modal-title";
+
+  // Focus first element when modal opens
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
+
+  // Trap focus within modal and close on Escape
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusableSelectors =
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusableEls = Array.from(
+        modal.querySelectorAll<HTMLElement>(focusableSelectors),
+      ).filter((el) => !el.closest('[aria-hidden="true"]'));
+
+      if (focusableEls.length === 0) return;
+      const first = focusableEls[0];
+      const last = focusableEls[focusableEls.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Return focus to trigger on close
+  const handleClose = () => {
+    onClose();
+    triggerRef.current?.focus();
+  };
 
   const handleConfirm = async () => {
     if (isDummy) {
       toast.success("Session requested! (Demo mode)");
-      onClose();
+      handleClose();
       return;
     }
     if (!tutor || !identity) return;
@@ -130,7 +190,7 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
         dateTime: BigInt(new Date(dateTime).getTime()) * BigInt(1_000_000),
       });
       toast.success("Session booked successfully!");
-      onClose();
+      handleClose();
     } catch {
       toast.error("Failed to book session. Please try again.");
     }
@@ -142,24 +202,40 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
       data-ocid="booking.modal"
+      role="presentation"
     >
+      {/* Backdrop */}
       <button
         type="button"
         className="absolute inset-0 backdrop-blur-md bg-black/20 cursor-default"
-        onClick={onClose}
-        aria-label="Close modal"
+        onClick={handleClose}
+        aria-label="Close booking modal"
+        tabIndex={-1}
       />
-      <div className="relative bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-8 w-full max-w-md">
+
+      {/* Dialog */}
+      <dialog
+        ref={modalRef}
+        open
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-8 w-full max-w-md"
+      >
         <button
+          ref={closeButtonRef}
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-border transition-colors"
           data-ocid="booking.close.button"
+          aria-label="Close booking modal"
         >
-          <X className="w-4 h-4 text-muted-foreground" />
+          <X className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
         </button>
 
-        <h2 className="text-xl font-bold text-foreground mb-6 tracking-tight">
+        <h2
+          id={titleId}
+          className="text-xl font-bold text-foreground mb-6 tracking-tight"
+        >
           Book a Micro-Session
         </h2>
 
@@ -170,6 +246,7 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
             style={{
               background: TUTOR_COLORS[String(tutor.user)] ?? "#007AFF",
             }}
+            aria-hidden="true"
           >
             {getInitials(tutor.displayName)}
           </div>
@@ -178,7 +255,10 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
               {tutor.displayName}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+              <CheckCircle2
+                className="w-3.5 h-3.5 text-green-500"
+                aria-hidden="true"
+              />
               Grade Card Verified Tutor
             </div>
           </div>
@@ -232,12 +312,17 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
         <Button
           onClick={handleConfirm}
           disabled={isPending}
+          aria-disabled={isPending}
           className="w-full bg-primary text-white hover:bg-primary/90 rounded-full font-semibold py-3 text-base"
           data-ocid="booking.confirm.button"
         >
           {isPending ? (
             <>
-              <Loader2 className="mr-2 w-4 h-4 animate-spin" /> Booking...
+              <Loader2
+                className="mr-2 w-4 h-4 animate-spin"
+                aria-hidden="true"
+              />
+              <span>Booking...</span>
             </>
           ) : (
             "Confirm Booking"
@@ -246,10 +331,10 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
 
         <div className="flex items-center justify-center gap-1.5 mt-3">
           <span className="text-xs text-muted-foreground">
-            🔒 Secure UPI Payments
+            <span aria-hidden="true">🔒</span> Secure UPI Payments
           </span>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
@@ -257,7 +342,7 @@ function BookingModal({ tutor, isDummy, onClose }: BookingModalProps) {
 interface TutorCardProps {
   tutor: DummyTutor;
   color?: string;
-  onBook: () => void;
+  onBook: (ref: React.RefObject<HTMLButtonElement | null>) => void;
   index: number;
 }
 
@@ -267,18 +352,21 @@ function TutorCard({
   onBook,
   index,
 }: TutorCardProps) {
+  const bookButtonRef = useRef<HTMLButtonElement>(null);
   const branch = (
     tutor as TutorProfile & { displayName: string; branch?: string }
   ).branch;
   return (
-    <div
+    <article
       className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4"
       data-ocid={`tutors.item.${index}`}
+      aria-label={`Tutor: ${tutor.displayName}`}
     >
       <div className="flex items-start justify-between">
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0"
           style={{ background: color }}
+          aria-hidden="true"
         >
           {getInitials(tutor.displayName)}
         </div>
@@ -286,8 +374,10 @@ function TutorCard({
           <Star
             className="w-3.5 h-3.5"
             style={{ fill: "#F4C542", color: "#F4C542" }}
+            aria-hidden="true"
           />
           <span className="text-sm font-semibold text-foreground">
+            <span className="sr-only">Rating: </span>
             {tutor.rating}/5
           </span>
         </div>
@@ -302,22 +392,34 @@ function TutorCard({
         )}
         {tutor.isVerified && (
           <div className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-medium px-2.5 py-0.5 rounded-full mt-2">
-            <CheckCircle2 className="w-3 h-3" /> Grade Card Verified
+            <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Grade Card
+            Verified
           </div>
         )}
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-start gap-1.5">
-          <BookOpen className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <BookOpen
+            className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0"
+            aria-hidden="true"
+          />
           <span className="text-xs text-muted-foreground">
+            <span className="sr-only">Subjects: </span>
             {tutor.masteredSubjects.join(", ")}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+          <Clock
+            className="w-3.5 h-3.5 text-muted-foreground"
+            aria-hidden="true"
+          />
           <span
-            className={`text-xs ${tutor.isAvailable ? "text-green-600 font-medium" : "text-muted-foreground"}`}
+            className={`text-xs ${
+              tutor.isAvailable
+                ? "text-green-600 font-medium"
+                : "text-muted-foreground"
+            }`}
           >
             {tutor.isAvailable ? "Available Now" : "Unavailable"}
           </span>
@@ -325,14 +427,16 @@ function TutorCard({
       </div>
 
       <Button
+        ref={bookButtonRef}
         className="w-full bg-primary text-white hover:bg-primary/90 rounded-full text-xs font-semibold mt-auto"
         size="sm"
-        onClick={onBook}
+        onClick={() => onBook(bookButtonRef)}
         data-ocid={`tutors.book.button.${index}`}
+        aria-label={`Book a session with ${tutor.displayName}`}
       >
         Book a Micro-Session
       </Button>
-    </div>
+    </article>
   );
 }
 
@@ -341,6 +445,8 @@ export default function JuniorDashboard() {
   const [activeSearch, setActiveSearch] = useState("");
   const [bookingTutor, setBookingTutor] = useState<DummyTutor | null>(null);
   const [bookingIsDummy, setBookingIsDummy] = useState(false);
+  const [bookingTriggerRef, setBookingTriggerRef] =
+    useState<React.RefObject<HTMLButtonElement | null> | null>(null);
 
   const { data: backendTutors = [], isLoading: tutorsLoading } =
     useSearchTutors(activeSearch);
@@ -374,39 +480,69 @@ export default function JuniorDashboard() {
     setActiveSearch(searchQuery);
   };
 
-  const openBooking = (tutor: DummyTutor, isDummy: boolean) => {
+  const openBooking = (
+    tutor: DummyTutor,
+    isDummy: boolean,
+    ref: React.RefObject<HTMLButtonElement | null>,
+  ) => {
     setBookingTutor(tutor);
     setBookingIsDummy(isDummy);
+    setBookingTriggerRef(ref);
   };
 
+  const tutorsResultId = "tutors-result-count";
+
   return (
-    <main className="min-h-screen bg-background">
+    <main id="main-content" className="min-h-screen bg-background">
       <div className="max-w-[1200px] mx-auto px-6 py-10">
         {/* Search bar */}
-        <form onSubmit={handleSearch} className="mb-10">
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by Subject Code (e.g., EST102 C Programming, BE110 Engineering Graphics, CYT100 Chemistry)..."
-              className="w-full bg-white border border-border rounded-full pl-12 pr-6 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary shadow-sm transition-all"
-              data-ocid="dashboard.search.input"
-            />
-          </div>
-        </form>
+        <search>
+          <form
+            onSubmit={handleSearch}
+            className="mb-10"
+            aria-label="Search tutors by subject"
+          >
+            <div className="relative max-w-2xl mx-auto">
+              <label htmlFor="tutor-search" className="sr-only">
+                Search tutors by subject code
+              </label>
+              <Search
+                className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <input
+                id="tutor-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by Subject Code (e.g., EST102 C Programming, BE110 Engineering Graphics, CYT100 Chemistry)..."
+                className="w-full bg-white border border-border rounded-full pl-12 pr-6 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary shadow-sm transition-all"
+                data-ocid="dashboard.search.input"
+                aria-controls={tutorsResultId}
+              />
+            </div>
+          </form>
+        </search>
 
         {/* Two-column layout */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main: Tutor cards */}
-          <div className="flex-1 min-w-0">
+          <section aria-labelledby="tutors-heading" className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-foreground tracking-tight">
+              <h2
+                id="tutors-heading"
+                className="text-xl font-bold text-foreground tracking-tight"
+              >
                 {activeSearch
                   ? `Tutors for "${activeSearch}"`
                   : "Top Verified Tutors"}
               </h2>
-              <Badge variant="secondary" className="rounded-full">
+              <Badge
+                id={tutorsResultId}
+                variant="secondary"
+                className="rounded-full"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 {allTutors.length} found
               </Badge>
             </div>
@@ -415,6 +551,8 @@ export default function JuniorDashboard() {
               <div
                 className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"
                 data-ocid="tutors.loading_state"
+                aria-label="Loading tutors"
+                aria-busy="true"
               >
                 {[1, 2, 3].map((i) => (
                   <div
@@ -429,16 +567,19 @@ export default function JuniorDashboard() {
                 ))}
               </div>
             ) : allTutors.length === 0 ? (
-              <div
-                className="bg-white rounded-2xl p-12 text-center shadow-sm"
+              <output
+                className="bg-white rounded-2xl p-12 text-center shadow-sm block"
                 data-ocid="tutors.empty_state"
               >
-                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <Search
+                  className="w-12 h-12 text-muted-foreground mx-auto mb-3"
+                  aria-hidden="true"
+                />
                 <p className="text-foreground font-semibold">No tutors found</p>
                 <p className="text-muted-foreground text-sm mt-1">
                   Try a different subject code
                 </p>
-              </div>
+              </output>
             ) : (
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {allTutors.map((tutor, i) => {
@@ -448,28 +589,37 @@ export default function JuniorDashboard() {
                       key={String(tutor.user)}
                       tutor={tutor}
                       color={TUTOR_COLORS[String(tutor.user)]}
-                      onBook={() => openBooking(tutor, isDummy)}
+                      onBook={(ref) => openBooking(tutor, isDummy, ref)}
                       index={i + 1}
                     />
                   );
                 })}
               </div>
             )}
-          </div>
+          </section>
 
           {/* Sidebar */}
-          <aside className="lg:w-80 space-y-5">
+          <aside
+            className="lg:w-80 space-y-5"
+            aria-label="Crash packs and sessions"
+          >
             {/* Series Exam Crash Packs */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <section
+              aria-labelledby="crash-packs-heading"
+              className="bg-white rounded-2xl p-6 shadow-sm"
+            >
               <div className="flex items-center gap-2 mb-5">
-                <Flame className="w-5 h-5 text-orange-500" />
-                <h3 className="font-bold text-foreground tracking-tight">
+                <Flame className="w-5 h-5 text-orange-500" aria-hidden="true" />
+                <h3
+                  id="crash-packs-heading"
+                  className="font-bold text-foreground tracking-tight"
+                >
                   Series Exam Crash Packs
                 </h3>
               </div>
-              <div className="space-y-4">
+              <ul className="space-y-4" aria-label="Available crash packs">
                 {CRASH_PACKS.map((pack, i) => (
-                  <div
+                  <li
                     key={pack.subject}
                     className="p-4 bg-background rounded-2xl"
                     data-ocid={`crashpacks.item.${i + 1}`}
@@ -478,8 +628,11 @@ export default function JuniorDashboard() {
                       {pack.subject}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-orange-600 font-medium mb-1">
-                      <Clock className="w-3 h-3" />
-                      Exam In: {pack.examIn}
+                      <Clock className="w-3 h-3" aria-hidden="true" />
+                      <span>
+                        <span className="sr-only">Exam in: </span>
+                        {pack.examIn}
+                      </span>
                     </div>
                     <div className="text-xs text-muted-foreground mb-3">
                       Seats Left:{" "}
@@ -491,47 +644,59 @@ export default function JuniorDashboard() {
                       size="sm"
                       className="w-full bg-primary text-white hover:bg-primary/90 rounded-full text-xs font-semibold"
                       data-ocid={`crashpacks.join.button.${i + 1}`}
+                      aria-label={`Join ${pack.subject} crash pack cohort`}
                     >
                       Join Cohort
                     </Button>
-                  </div>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            </section>
 
             {/* Upcoming Sessions */}
             <Card className="rounded-2xl shadow-sm border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2 font-bold">
-                  <Calendar className="w-4 h-4 text-primary" />
+                  <Calendar
+                    className="w-4 h-4 text-primary"
+                    aria-hidden="true"
+                  />
                   Upcoming Sessions
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {sessionsLoading ? (
-                  <div className="space-y-3" data-ocid="sessions.loading_state">
+                  <div
+                    className="space-y-3"
+                    data-ocid="sessions.loading_state"
+                    aria-label="Loading sessions"
+                    aria-busy="true"
+                  >
                     <Skeleton className="h-16 w-full rounded-xl" />
                     <Skeleton className="h-16 w-full rounded-xl" />
                   </div>
                 ) : pendingSessions.length + confirmedSessions.length === 0 ? (
-                  <div
-                    className="text-center py-6"
+                  <output
+                    className="text-center py-6 block"
                     data-ocid="sessions.empty_state"
                   >
-                    <Calendar className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <Calendar
+                      className="w-8 h-8 text-muted-foreground mx-auto mb-2"
+                      aria-hidden="true"
+                    />
                     <p className="text-sm text-muted-foreground">
                       No upcoming sessions
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Book a session with a tutor!
                     </p>
-                  </div>
+                  </output>
                 ) : (
-                  <div className="space-y-3">
+                  <ul className="space-y-3" aria-label="Upcoming sessions list">
                     {[...confirmedSessions, ...pendingSessions]
                       .slice(0, 5)
                       .map((s, i) => (
-                        <div
+                        <li
                           key={String(s.id)}
                           className="p-3 bg-background rounded-xl"
                           data-ocid={`sessions.item.${i + 1}`}
@@ -556,9 +721,9 @@ export default function JuniorDashboard() {
                               Number(s.dateTime) / 1_000_000,
                             ).toLocaleDateString()}
                           </div>
-                        </div>
+                        </li>
                       ))}
-                  </div>
+                  </ul>
                 )}
               </CardContent>
             </Card>
@@ -566,41 +731,44 @@ export default function JuniorDashboard() {
             {/* Stats */}
             <Card className="rounded-2xl shadow-sm border-border">
               <CardContent className="pt-5">
-                <div className="space-y-3">
+                <dl className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
+                    <dt className="text-sm text-muted-foreground">
                       Total Sessions
-                    </span>
-                    <span className="font-semibold text-foreground">
+                    </dt>
+                    <dd className="font-semibold text-foreground">
                       {sessions.length}
-                    </span>
+                    </dd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
-                      Pending
-                    </span>
-                    <Badge variant="secondary">{pendingSessions.length}</Badge>
+                    <dt className="text-sm text-muted-foreground">Pending</dt>
+                    <dd>
+                      <Badge variant="secondary">
+                        {pendingSessions.length}
+                      </Badge>
+                    </dd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
-                      Confirmed
-                    </span>
-                    <Badge className="bg-primary text-white">
-                      {confirmedSessions.length}
-                    </Badge>
+                    <dt className="text-sm text-muted-foreground">Confirmed</dt>
+                    <dd>
+                      <Badge className="bg-primary text-white">
+                        {confirmedSessions.length}
+                      </Badge>
+                    </dd>
                   </div>
-                </div>
+                </dl>
               </CardContent>
             </Card>
           </aside>
         </div>
       </div>
 
-      {bookingTutor && (
+      {bookingTutor && bookingTriggerRef && (
         <BookingModal
           tutor={bookingTutor}
           isDummy={bookingIsDummy}
           onClose={() => setBookingTutor(null)}
+          triggerRef={bookingTriggerRef}
         />
       )}
     </main>

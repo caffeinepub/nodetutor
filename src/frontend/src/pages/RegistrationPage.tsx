@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "@tanstack/react-router";
 import { BookOpen, GraduationCap, Loader2, Upload } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { setDemoProfile } from "../hooks/useDemoAuth";
 
@@ -19,6 +19,7 @@ const inputClass =
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,6 +30,14 @@ export default function RegistrationPage() {
   const [branch, setBranch] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+
+  const handleFileSelect = (file: File | undefined) => {
+    if (file) {
+      setUploadedFile(file.name);
+      toast.success(`File "${file.name}" selected.`);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +54,20 @@ export default function RegistrationPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      {/* Skip link */}
+      <a
+        href="#registration-form"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-full focus:font-semibold focus:shadow-lg"
+      >
+        Skip to registration form
+      </a>
+
       <div className="w-full max-w-lg">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
+        <div
+          className="flex items-center justify-center gap-2.5 mb-8"
+          aria-hidden="true"
+        >
           <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
             <span className="text-white font-bold">N</span>
           </div>
@@ -61,16 +81,25 @@ export default function RegistrationPage() {
           <h1 className="text-2xl font-bold text-foreground tracking-tight mb-1">
             Complete Your Profile
           </h1>
-          <p className="text-muted-foreground text-sm mb-6">
+          <p
+            className="text-muted-foreground text-sm mb-6"
+            id="form-description"
+          >
             Set up your account to get started
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            id="registration-form"
+            onSubmit={handleSubmit}
+            className="space-y-5"
+            aria-describedby="form-description"
+            noValidate
+          >
             {/* Role selector */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-foreground">
                 I am a...
-              </Label>
+              </legend>
               <RadioGroup
                 value={role}
                 onValueChange={(v) => setRole(v as "junior" | "senior")}
@@ -90,7 +119,10 @@ export default function RegistrationPage() {
                     id="junior"
                     className="sr-only"
                   />
-                  <BookOpen className="w-5 h-5 text-primary" />
+                  <BookOpen
+                    className="w-5 h-5 text-primary"
+                    aria-hidden="true"
+                  />
                   <div>
                     <div className="font-semibold text-sm text-foreground">
                       Junior Student
@@ -113,7 +145,10 @@ export default function RegistrationPage() {
                     id="senior"
                     className="sr-only"
                   />
-                  <GraduationCap className="w-5 h-5 text-primary" />
+                  <GraduationCap
+                    className="w-5 h-5 text-primary"
+                    aria-hidden="true"
+                  />
                   <div>
                     <div className="font-semibold text-sm text-foreground">
                       Senior Tutor
@@ -124,7 +159,7 @@ export default function RegistrationPage() {
                   </div>
                 </Label>
               </RadioGroup>
-            </div>
+            </fieldset>
 
             {/* Name + Email */}
             <div className="grid grid-cols-2 gap-4">
@@ -133,7 +168,8 @@ export default function RegistrationPage() {
                   htmlFor="name"
                   className="text-sm font-medium text-foreground"
                 >
-                  Full Name *
+                  Full Name <span aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </Label>
                 <input
                   id="name"
@@ -141,6 +177,8 @@ export default function RegistrationPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Alex Kumar"
                   required
+                  aria-required="true"
+                  autoComplete="name"
                   className={inputClass}
                   data-ocid="register.name.input"
                 />
@@ -150,7 +188,8 @@ export default function RegistrationPage() {
                   htmlFor="email"
                   className="text-sm font-medium text-foreground"
                 >
-                  Email *
+                  Email <span aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </Label>
                 <input
                   id="email"
@@ -159,6 +198,8 @@ export default function RegistrationPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex@college.edu"
                   required
+                  aria-required="true"
+                  autoComplete="email"
                   className={inputClass}
                   data-ocid="register.email.input"
                 />
@@ -171,7 +212,9 @@ export default function RegistrationPage() {
                 htmlFor="urn"
                 className="text-sm font-medium text-foreground"
               >
-                University Registration Number (URN) *
+                University Registration Number (URN){" "}
+                <span aria-hidden="true">*</span>
+                <span className="sr-only">(required)</span>
               </Label>
               <input
                 id="urn"
@@ -179,6 +222,7 @@ export default function RegistrationPage() {
                 onChange={(e) => setUrn(e.target.value)}
                 placeholder="e.g. KTU/2022/1234"
                 required
+                aria-required="true"
                 className={inputClass}
                 data-ocid="register.urn.input"
               />
@@ -190,7 +234,8 @@ export default function RegistrationPage() {
                 htmlFor="university"
                 className="text-sm font-medium text-foreground"
               >
-                University / College *
+                University / College <span aria-hidden="true">*</span>
+                <span className="sr-only">(required)</span>
               </Label>
               <input
                 id="university"
@@ -198,6 +243,7 @@ export default function RegistrationPage() {
                 onChange={(e) => setUniversity(e.target.value)}
                 placeholder="APJ Abdul Kalam Technological University"
                 required
+                aria-required="true"
                 className={inputClass}
                 data-ocid="register.university.input"
               />
@@ -206,13 +252,23 @@ export default function RegistrationPage() {
             {/* Semester + Branch */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-foreground">
-                  Semester *
+                <Label
+                  htmlFor="semester-select"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Semester <span aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </Label>
-                <Select value={semester} onValueChange={setSemester}>
+                <Select
+                  value={semester}
+                  onValueChange={setSemester}
+                  name="semester"
+                >
                   <SelectTrigger
+                    id="semester-select"
                     className="bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary"
                     data-ocid="register.semester.select"
+                    aria-required="true"
                   >
                     <SelectValue placeholder="Select semester" />
                   </SelectTrigger>
@@ -230,7 +286,8 @@ export default function RegistrationPage() {
                   htmlFor="branch"
                   className="text-sm font-medium text-foreground"
                 >
-                  Branch *
+                  Branch <span aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </Label>
                 <input
                   id="branch"
@@ -238,6 +295,7 @@ export default function RegistrationPage() {
                   onChange={(e) => setBranch(e.target.value)}
                   placeholder="Computer Science"
                   required
+                  aria-required="true"
                   className={inputClass}
                   data-ocid="register.branch.input"
                 />
@@ -247,10 +305,14 @@ export default function RegistrationPage() {
             {/* Senior-only: KYC Upload */}
             {role === "senior" && (
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-foreground">
+                <Label
+                  htmlFor="grade-card-upload"
+                  className="text-sm font-medium text-foreground"
+                >
                   KYC Grade Card Upload
                 </Label>
-                <div
+                <label
+                  htmlFor="grade-card-upload"
                   onDragOver={(e) => {
                     e.preventDefault();
                     setDragOver(true);
@@ -259,6 +321,7 @@ export default function RegistrationPage() {
                   onDrop={(e) => {
                     e.preventDefault();
                     setDragOver(false);
+                    handleFileSelect(e.dataTransfer.files?.[0]);
                   }}
                   className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center gap-2 transition-colors cursor-pointer ${
                     dragOver
@@ -267,22 +330,34 @@ export default function RegistrationPage() {
                   }`}
                   data-ocid="register.dropzone"
                 >
-                  <Upload className="w-6 h-6 text-muted-foreground" />
+                  <Upload
+                    className="w-6 h-6 text-muted-foreground"
+                    aria-hidden="true"
+                  />
                   <p className="text-sm font-medium text-foreground">
-                    Drag & drop your grade card here
+                    {uploadedFile
+                      ? `Selected: ${uploadedFile}`
+                      : "Drag & drop your grade card here"}
                   </p>
                   <p className="text-xs text-muted-foreground text-center">
                     Official KTU Grade Card (KYC) — Required: Must score B+ or
                     above to verify proficiency.
                   </p>
-                  <button
-                    type="button"
-                    className="text-xs text-primary font-medium mt-1 hover:underline"
-                    data-ocid="register.upload_button"
-                  >
+                  <span className="text-xs text-primary font-medium mt-1">
                     Browse files
-                  </button>
-                </div>
+                  </span>
+                </label>
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  id="grade-card-upload"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="sr-only"
+                  data-ocid="register.upload_button"
+                  onChange={(e) => handleFileSelect(e.target.files?.[0])}
+                  aria-label="Upload KTU grade card file"
+                />
               </div>
             )}
 
@@ -291,13 +366,17 @@ export default function RegistrationPage() {
               <Button
                 type="submit"
                 disabled={isPending}
-                className="w-full bg-primary hover:bg-primary/90 text-white rounded-full font-semibold py-2.5"
+                aria-disabled={isPending}
+                className="w-full bg-primary hover:bg-primary/90 text-white rounded-full font-semibold py-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
                 data-ocid="register.submit_button"
               >
                 {isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Profile...
+                    <Loader2
+                      className="mr-2 h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span>Creating Profile...</span>
                   </>
                 ) : (
                   "Create Profile & Continue"
